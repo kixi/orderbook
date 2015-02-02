@@ -1,6 +1,6 @@
-(ns feeder.orderbook-test
+(ns orderbook.orderbook-test
   (:require [clojure.test :refer :all]
-            [feeder.orderbook :refer :all]))
+            [orderbook.orderbook :refer :all]))
 (def date1 (java.util.Date.))
 (def date2 (java.util.Date. (+ 1 (.getTime date1))))
 

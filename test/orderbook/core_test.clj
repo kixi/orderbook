@@ -1,6 +1,6 @@
-(ns feeder.core-test
+(ns orderbook.core-test
   (:require [clojure.test :refer :all]
-            [feeder.core :refer :all]))
+            [orderbook.core :refer :all]))
 
 (deftest a-test
   (testing "FIXME, I fail."

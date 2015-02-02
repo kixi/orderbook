@@ -1,3 +1,3 @@
-(ns feeder.orderbook-perftest
-  (:require [feeder.orderbook :refer :all])
+(ns orderbook.orderbook-perftest
+  (:require [orderbook.orderbook :refer :all])
   (:gen-class))

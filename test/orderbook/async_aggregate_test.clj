@@ -1,11 +1,11 @@
-(ns feeder.async-aggregate-test
+(ns orderbook.async-aggregate-test
   (:require [clojure.test :refer :all]
-            [feeder.async-aggregate :refer :all]
+            [orderbook.async-aggregate :refer :all]
             [clojure.core.async :as async]))
 
 
 (def dummy-aggregate
-  (partial aggregate
+  (partial run-aggregate!
            (reify Aggregate
              (initial-value [this] 0)
              (apply-event [this aggr event]

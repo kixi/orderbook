@@ -5,22 +5,22 @@
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* true)
 
-(def buysell-set #{:buy :sell})
+(def ^:const buysell-set #{:buy :sell})
 
-(def bid-buy-map {:buy :bid
-                  :sell :ask})
+(def ^:const bid-buy-map {:buy :bid
+                          :sell :ask})
 
 (defmacro compare-or
   ([] 0)
   ([f] f)
   ([f & next]
-   `(let [compare# ~f]
-      (if (= 0 compare#) (compare-or ~@next) compare#))))
+     `(let [compare# ~f]
+        (if (= 0 compare#) (compare-or ~@next) compare#))))
 
 (defrecord OrderIdx [^java.util.UUID order-id
-                  buysell
-                  ^double limit
-                  ^java.util.Date enqueued]
+                     buysell
+                     ^double limit
+                     ^java.util.Date enqueued]
   Comparable
   (compareTo [this other]
     (case buysell
@@ -44,15 +44,12 @@
 (defn indexOrder [^Order order]
   (OrderIdx. (:order-id order) (:buysell order) (:limit order) (:enqueued order)))
 
-(def empty-orderbook {:bid (sorted-map)
-                      :ask (sorted-map)
-} )
-
+(def ^:const empty-orderbook {:bid (sorted-map)
+                              :ask (sorted-map)})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Event processing
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 
 
 (defn update-orderbook [leg orderbook event]
