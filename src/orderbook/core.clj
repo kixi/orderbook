@@ -10,8 +10,9 @@
             [langohr.consumers :as lc]
             [langohr.exchange :as le]
             [langohr.basic :as lb]
-            [com.stuartsierra.component :as component]
-            [orderbook.async :as asvc]))
+            [orderbook.async :as asvc]
+            [orderbook.orderbook-svc :as svc]
+            [orderbook.eventstore :as es]))
 
 (def service-name "OrderbookService")
 
@@ -31,10 +32,31 @@
 
 
 (defn -main [& args]
-  (let [connection (rmq/connect {:automatically-recover true
-                                 :automatically-recover-topology :true})
-        channel (lch/open connection)
-        monitoring-chan (asvc/publisher-chan (asvc/->LangohrPublisherEndpoint channel "autrade.monitor"))
-        command-chan (asvc/subscriber-chan (asvc/->LangohrReceiverEndpoint channel "mon"))
-        _ (heartbeat {:chan monitoring-chan :service-name service-name :frequency (freq->ms 1)})
-]))
+  (let [mq-connection (rmq/connect {:automatically-recover true
+                                    :automatically-recover-topology :true})
+        mq-channel (lch/open mq-connection)
+        monitoring-chan (asvc/publisher-chan (asvc/->LangohrPublisherEndpoint mq-channel "orderbook.monitor"))
+        command-chan (asvc/subscriber-chan (asvc/->LangohrReceiverEndpoint mq-channel "orderbook.command"))
+        event-chan (asvc/publisher-chan (asvc/->LangohrPublisherEndpoint mq-channel "orderbook.events"))
+
+        eventstore-save-ch (async/chan)
+        eventstore-cmd-ch (async/chan)
+        
+        _ (comment (heartbeat {:chan monitoring-chan :service-name service-name :frequency (freq->ms 1)}))
+
+        _ (es/run-eventstore! eventstore-save-ch eventstore-cmd-ch event-chan)
+        _ (svc/run-service! command-chan eventstore-save-ch [:USD :CHF :GBP] eventstore-cmd-ch)
+        
+        ]))
+
+
+(def cmd-ch (async/chan))
+(def es-save-ch (async/chan))
+(def es-cmd-ch (async/chan))
+(def evt-ch (async/chan))
+
+(defn run! []
+  (es/run-eventstore! es-save-ch es-cmd-ch evt-ch)
+  (svc/run-service! cmd-ch es-save-ch [:USD :CHF :GBP] es-cmd-ch))
+
+(comment  (async/put! cmd-ch {:product :USD :order {:order-id "1" :limit 1.2 :buysell :buy :quantity 10}}))

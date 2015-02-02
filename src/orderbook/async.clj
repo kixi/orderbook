@@ -51,8 +51,8 @@
   ([endpoint chan]
      (subscribe endpoint
                 (fn [msg]
-                  (async/put! chan msg)))
-     (chan)))
+                  (async/>!! chan msg)))
+     chan))
 
 (defn publisher-chan
   ([endpoint]
