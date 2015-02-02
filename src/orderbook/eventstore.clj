@@ -15,4 +15,5 @@
     (let [cmd (async/<! command-ch)]
       (log/debug "Eventstore: command received" cmd)
       (if-let [ret-ch (:chan cmd)]
-        (async/close! ret-ch)))))
+        (async/close! ret-ch)))
+    (recur)))
