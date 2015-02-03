@@ -9,7 +9,7 @@
       (if-let [ret-ch (:chan evt)]
         (do (log/debug "Eventstore: save event: " evt)
             (doseq [e (:events evt)]
-              (async/>! publish-ch {:aggregate-id (:aggregate-id evt) :event e}))
+              (async/>! publish-ch (assoc e :aggregate-id (:aggregate-id evt))))
             (async/>! ret-ch :success))))
     (recur))
   
