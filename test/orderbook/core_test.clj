@@ -28,10 +28,17 @@
       (async/put! cmd-ch {:product :USD :order {:order-id "4" :limit 1.21 :buysell :sell :quantity 10}})
       (is (= 1 (async/<!! evt-ch)))
 
+      (async/put! cmd-ch {:product :CHF :order {:order-id "41" :limit 1.21 :buysell :sell :quantity 10}})
+      (is (= 1 (async/<!! evt-ch)))
+
       (async/put! cmd-ch {:product :USD :order {:order-id "5" :limit 1.22 :buysell :buy :quantity 10}})
       (is (= 1 (async/<!! evt-ch)))
 
       (async/put! cmd-ch {:product :USD :order {:order-id "5" :limit 1.2 :buysell :sell :quantity 10}})
       (is (= 1 (async/<!! evt-ch)))
+      
+      (async/put! cmd-ch {:product :CHF :order {:order-id "42" :limit 1.21 :buysell :buy :quantity 10}})
+      (is (= 1 (async/<!! evt-ch)))
+
 
       )))
