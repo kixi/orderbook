@@ -11,6 +11,7 @@
             (async/>! publish-ch evt)
             (async/>! ret-ch :success))))
     (recur))
+  
   (async/go-loop []
     (let [cmd (async/<! command-ch)]
       (log/debug "Eventstore: command received" cmd)

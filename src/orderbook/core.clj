@@ -55,7 +55,7 @@
 (def es-cmd-ch (async/chan))
 (def evt-ch (async/chan))
 
-(defn run! []
+(defn run-p! []
   (es/run-eventstore! es-save-ch es-cmd-ch evt-ch)
   (svc/run-service! cmd-ch es-save-ch [:USD :CHF :GBP] es-cmd-ch))
 
