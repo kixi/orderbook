@@ -26,18 +26,18 @@
       (log/info "Command Handler started " aggregate-id)
       (loop []
         (if-let [cmd (async/<! cmd-ch) ]
-          (let [_ (log/info "Command received " cmd)
+          (let [_ (log/debug "Command received " cmd)
                 ;; process command
                 [ob events] (handle aggr @orderbook cmd)
                 ret-chan (async/chan)]
 
-            (log/info "Store results " ob events)
+            (log/debug "Store results " ob events)
             ;; store events
             (async/>! event-ch {:aggregate-id aggregate-id
                                 :chan ret-chan
                                 :events events})
 
-            (log/info "Waiting for response")
+            (log/debug "Waiting for response")
             (case (async/<! ret-chan)
               ;; update aggregate
               :success (reset! orderbook ob))

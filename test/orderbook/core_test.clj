@@ -71,3 +71,38 @@
              (clean-to-compare-legs (async/<!! evt-ch))))
 
       )))
+
+(defn random-order []
+  {:product (rand-nth [:CHF :GBP :USD] )
+   :order {:order-id (java.util.UUID/randomUUID)
+           :limit (+ 1.0 (* 0.05 (rand)))
+           :quantity (+ 1 (rand-int 1000))
+           :buysell (rand-nth [:buy :sell])}})
+
+
+(deftest performance-test-wo-queues
+  (testing "scenarios"
+    (let [cmd-ch (async/chan)
+          es-save-ch (async/chan)
+          es-cmd-ch (async/chan)
+          evt-ch (async/chan)]
+
+      (es/run-eventstore! es-save-ch es-cmd-ch evt-ch)
+      (svc/run-service! cmd-ch es-save-ch [:USD :CHF :GBP] es-cmd-ch)
+
+
+      (println "start")
+      (async/go-loop [x 0]
+        (if (< x 10000)
+          (do
+            (async/<! evt-ch)
+            (recur (inc x)))
+          (println " finished")))
+
+
+      (async/go
+         (loop [x 100000]
+           (when-not (= 0 x)
+             (async/>! cmd-ch (random-order))
+             (recur (dec x)))))
+      )))

@@ -15,6 +15,6 @@
                              com.sun.jdmk/jmxtools
                              com.sun.jmx/jmxri]]
                  ]
-  :main orderbook.orderbook
-  :aot [orderbook.orderbook]
+  :main orderbook.core
+  :aot [orderbook.core]
   :jvm-opts ["-XX:-TieredCompilation"])

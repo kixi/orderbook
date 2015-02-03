@@ -36,7 +36,7 @@
                                     :automatically-recover-topology :true})
         mq-channel (lch/open mq-connection)
         monitoring-chan (asvc/publisher-chan (asvc/->LangohrPublisherEndpoint mq-channel "orderbook.monitor"))
-        command-chan (asvc/subscriber-chan (asvc/->LangohrReceiverEndpoint mq-channel "orderbook.command"))
+        command-chan (asvc/subscriber-chan (asvc/->LangohrReceiverEndpoint mq-channel "orderbook.command") (async/chan 1 (map #(:payload %))))
         event-chan (asvc/publisher-chan (asvc/->LangohrPublisherEndpoint mq-channel "orderbook.events"))
 
         eventstore-save-ch (async/chan)
@@ -50,13 +50,17 @@
         ]))
 
 
-(def cmd-ch (async/chan))
-(def es-save-ch (async/chan))
-(def es-cmd-ch (async/chan))
-(def evt-ch (async/chan))
+(defn mq-client-channel []
+  (let [mq-connection (rmq/connect {:automatically-recover true
+                                    :automatically-recover-topology :true})
+        mq-channel (lch/open mq-connection)
+        command-chan (asvc/publisher-chan (asvc/->LangohrPublisherEndpoint mq-channel "orderbook.command.exchange"))
 
-(defn run-p! []
-  (es/run-eventstore! es-save-ch es-cmd-ch evt-ch)
-  (svc/run-service! cmd-ch es-save-ch [:USD :CHF :GBP] es-cmd-ch))
+        
+        
+        ]
+    command-chan))
 
-(comment  (async/put! cmd-ch {:product :USD :order {:order-id "1" :limit 1.2 :buysell :buy :quantity 10}}))
+(defn random-orders [ch cnt]
+  (doseq [x (range cnt)]
+    (async/>!! ch {:product :USD :order {:order-id (str x) :limit (rand) :quantity 10 :buysell (if (= (rand-int 2) 0) :buy :sell)}})))

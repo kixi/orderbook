@@ -51,6 +51,7 @@
   ([endpoint chan]
      (subscribe endpoint
                 (fn [msg]
+                  (log/debug "Message received " msg)
                   (async/>!! chan msg)))
      chan))
 
