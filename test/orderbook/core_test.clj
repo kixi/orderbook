@@ -79,6 +79,12 @@
            :quantity (+ 1 (rand-int 1000))
            :buysell (rand-nth [:buy :sell])}})
 
+(defmacro measure-time
+  "Evaluates expr and returns the time"
+  [expr]
+  `(let [start# (. System (nanoTime))
+         ret# ~expr]
+     (/ (double (- (. System (nanoTime)) start#)) 1000000.0)))
 
 (deftest performance-test-wo-queues
   (testing "scenarios"
@@ -91,18 +97,20 @@
       (svc/run-service! cmd-ch es-save-ch [:USD :CHF :GBP] es-cmd-ch)
 
 
-      (println "start")
-      (async/go-loop [x 0]
-        (if (< x 10000)
-          (do
-            (async/<! evt-ch)
-            (recur (inc x)))
-          (println " finished")))
-
-
-      (async/go
-         (loop [x 100000]
-           (when-not (= 0 x)
-             (async/>! cmd-ch (random-order))
-             (recur (dec x)))))
-      )))
+      (is (< (measure-time
+              (do
+                (async/go
+                  (loop [x 100000]
+                    (when-not (= 0 x)
+                      (async/>! cmd-ch (random-order))
+                      (recur (dec x)))))
+                
+                (async/<!! (async/go
+                             (loop [x 0]
+                               (if (< x 10000)
+                                 (do
+                                   (async/<! evt-ch)
+                                   (recur (inc x)))
+                                 ))
+                             :finished))))
+             1000)))))
