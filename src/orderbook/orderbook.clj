@@ -1,5 +1,8 @@
 (ns orderbook.orderbook
-  (:require [clojure.pprint])
+  (:require [clojure.pprint]
+            [orderbook.util :refer :all]
+            [orderbook.types :refer :all])
+  (:import [orderbook.types Order])
   (:gen-class))
 
 (set! *warn-on-reflection* true)
@@ -9,13 +12,6 @@
 
 (def ^:const bid-buy-map {:buy :bid
                           :sell :ask})
-
-(defmacro compare-or
-  ([] 0)
-  ([f] f)
-  ([f & next]
-     `(let [compare# ~f]
-        (if (= 0 compare#) (compare-or ~@next) compare#))))
 
 (defrecord OrderIdx [^java.util.UUID order-id
                      buysell
@@ -32,14 +28,6 @@
                         (compare order-id (:order-id other)))
       )))
 
-(defrecord Order [^java.util.UUID order-id
-                  buysell
-                  ^double limit
-                  ^long quantity
-                  ^java.util.Date enqueued
-                  ^String split-id
-                  ]
-  )
 
 (defn indexOrder [^Order order]
   (OrderIdx. (:order-id order) (:buysell order) (:limit order) (:enqueued order)))
@@ -51,7 +39,6 @@
 ;;; Event processing
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
 (defn update-orderbook [leg orderbook event]
   (let [order (assoc (:order event) :enqueued (:enqueued event))]
     (-> orderbook
@@ -61,15 +48,14 @@
 (defmulti apply-event (fn [orderbook event] (:event event)))
 
 (defmethod apply-event :buy-order-placed [orderbook event]
-  (update-orderbook :bid orderbook event)
-)
+  (update-orderbook :bid orderbook event))
 
 (defmethod apply-event :sell-order-placed [orderbook event]
   (update-orderbook :ask orderbook event))
 
 (defn enqueued-leg [event]
-  (cond (get-in event [:orders :leg1 :enqueued])   :leg1
-        (get-in event [:orders :leg2 :enqueued])   :leg2))
+  (cond (get-in event [:orders :leg1 :enqueued]) :leg1
+        (get-in event [:orders :leg2 :enqueued]) :leg2))
 
 (defmethod apply-event :orders-matched [orderbook event]
   (let [idx-table (bid-buy-map (get-in event [:orders (enqueued-leg event) :buysell]))
@@ -180,12 +166,6 @@ Returns [orderbook, [events]]"
   (fn
     [orderbook ^Order order] ( place-order orderbook order [] f-now f-id-gen)))
 
-(defn now! []
-  (java.util.Date.))
-
-(defn id-gen! []
-  (java.util.UUID/randomUUID ))
-
 (def place-order-m (create-place-order-f now! id-gen!) )
 
 
@@ -193,38 +173,3 @@ Returns [orderbook, [events]]"
   (place-order-m orderbook (map->Order (:order cmd))))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; tests
-(defn po [orderbook ^Order order]
-  (let [ [ob events] (place-order-m orderbook order)]
-    ob))
-
-(defn create-random-order []
-  (let [bs (if (= ( rand-int 2) 0) :buy :sell)
-        limit (if (= bs :buy) (+ 100 (rand 10)) (+ 100 (rand 10)))]
-    (Order. (id-gen!)
-            bs
-            limit
-            (+ 1 (rand-int 1000))
-            nil
-            nil)))
-
-(defn print-stats [ob]
-  (clojure.pprint/pprint ob)
-  (println "ASKS:" (count (:ask ob)))
-  (println "BIDS:" (count (:bid ob))))
-
-(defn pto [n]
-;; (time 
-   (loop [x n ob empty-orderbook]
-     (if (> x 0)
-       (recur (dec x) (po ob  (create-random-order)))
-       ob)))
-;;)
-
-
-(defn pt [n]
-  (loop [s (sorted-set) i n]
-    (when (> i 0)
-      (first s)
-      (recur (conj s (indexOrder (create-random-order))) (dec i)))))

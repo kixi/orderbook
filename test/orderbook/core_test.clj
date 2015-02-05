@@ -4,7 +4,8 @@
             [orderbook.async :as asvc]
             [orderbook.orderbook-svc :as svc]
             [clojure.core.async :as async]
-            [orderbook.eventstore :as es]))
+            [orderbook.eventstore :as es]
+            [orderbook.util :refer :all]))
 
 (defn clean-to-compare [e]
   (-> e
@@ -79,37 +80,32 @@
            :quantity (+ 1 (rand-int 1000))
            :buysell (rand-nth [:buy :sell])}})
 
-(defmacro measure-time
-  "Evaluates expr and returns the time"
-  [expr]
-  `(let [start# (. System (nanoTime))
-         ret# ~expr]
-     (/ (double (- (. System (nanoTime)) start#)) 1000000.0)))
-
-(deftest performance-test-wo-queues
-  (testing "scenarios"
-    (let [cmd-ch (async/chan)
-          es-save-ch (async/chan)
-          es-cmd-ch (async/chan)
-          evt-ch (async/chan)]
-
-      (es/run-eventstore! es-save-ch es-cmd-ch evt-ch)
-      (svc/run-service! cmd-ch es-save-ch [:USD :CHF :GBP] es-cmd-ch)
-
-      (is (< (measure-time
-              (do
+(defn place-orders!! [cnt cmd-ch evt-ch]
                 (async/go
-                  (loop [x 10000]
+                  (loop [x cnt]
                     (when-not (= 0 x)
                       (async/>! cmd-ch (random-order))
                       (recur (dec x)))))
                 
-                (async/<!! (async/go
-                             (loop [x 0]
-                               (if (< x 10000)
-                                 (do
-                                   (async/<! evt-ch)
-                                   (recur (inc x)))
-                                 ))
-                             :finished))))
-             1000)))))
+                (async/<!!
+                 (async/go
+                   (loop [x 0]
+                     (if (< x cnt)
+                       (do
+                         (async/<! evt-ch)
+                         (recur (inc x)))
+                       ))
+                   :finished)))
+
+(deftest performance-test-wo-queues
+  (testing "scenarios"
+    (let [cmd-ch (async/chan 10000)
+          es-save-ch (async/chan 10000)
+          es-cmd-ch (async/chan)
+          evt-ch (async/chan 10000)]
+
+      (es/run-eventstore! es-save-ch es-cmd-ch evt-ch)
+      (svc/run-service! cmd-ch es-save-ch [:USD :CHF :GBP] es-cmd-ch)
+
+      (place-orders!! 100000 cmd-ch evt-ch)
+      (is (< (measure-time (place-orders!! 100000 cmd-ch evt-ch)) 1000)))))

@@ -1,6 +1,10 @@
 (ns orderbook.orderbook-test
   (:require [clojure.test :refer :all]
-            [orderbook.orderbook :refer :all]))
+            [orderbook.orderbook :refer :all]
+            [orderbook.types :refer :all]
+            [orderbook.util :refer :all])
+  (:import [orderbook.types Order]))
+
 (def date1 (java.util.Date.))
 (def date2 (java.util.Date. (+ 1 (.getTime date1))))
 
@@ -214,4 +218,30 @@
                  :buysell :buy,
                  :quantity 1}}]]))
       )
+    ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; tests
+(defn po [orderbook ^Order order]
+  (let [ [ob events] (place-order-m orderbook order)]
+    ob))
+
+
+(defn print-stats [ob]
+  (clojure.pprint/pprint ob)
+  (println "ASKS:" (count (:ask ob)))
+  (println "BIDS:" (count (:bid ob))))
+
+(defn pto [n]
+;; (time 
+   (loop [x n ob empty-orderbook]
+     (if (> x 0)
+       (recur (dec x) (po ob  (create-random-order)))
+       ob)))
+;;)
+
+(deftest performance
+  (testing "place order within 1s"
+    (pto 100000) ;; warmup
+    (is (< (measure-time (pto 100000))) 1000)
     ))

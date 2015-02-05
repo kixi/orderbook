@@ -14,7 +14,7 @@
     (dom/handle aggregate command)))
 
 (defn create-channels [orderbook-ids]
-  (zipmap orderbook-ids (repeatedly #(async/chan 100))))
+  (zipmap orderbook-ids (repeatedly #(async/chan 1000))))
 
 (defn- build-distribution-channels! [cmd-ch aggregate-ids]
   (let [publisher (async/pub cmd-ch #(:product %))
