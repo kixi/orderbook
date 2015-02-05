@@ -96,11 +96,10 @@
       (es/run-eventstore! es-save-ch es-cmd-ch evt-ch)
       (svc/run-service! cmd-ch es-save-ch [:USD :CHF :GBP] es-cmd-ch)
 
-
       (is (< (measure-time
               (do
                 (async/go
-                  (loop [x 100000]
+                  (loop [x 10000]
                     (when-not (= 0 x)
                       (async/>! cmd-ch (random-order))
                       (recur (dec x)))))
