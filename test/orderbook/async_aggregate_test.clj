@@ -41,4 +41,18 @@
         (is (= (dissoc event :chan)  {:aggregate-id "1"
                                       :events [{:event-type :incremented :val 1}]}))
         (async/put! (:chan event) :success)
-        (async/close! cmd-ch))))) 
+        (async/close! cmd-ch))))
+
+(testing "empty aggregate performance"
+    (let [cmd-ch (async/chan)
+          startup-ch (async/chan)
+          event-ch (async/chan)
+          aggr (dummy-aggregate "1" cmd-ch event-ch startup-ch)]
+      (async/close! startup-ch)
+
+      (time (async/<!! (async/go (doseq [x (range 100000)]
+                             (async/>! cmd-ch {:cmd :increment})
+                             (let [event (async/<! event-ch)]
+                               (async/>! (:chan event) :success)
+                               ))
+                                 :end))))))

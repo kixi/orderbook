@@ -108,4 +108,4 @@
       (svc/run-service! cmd-ch es-save-ch [:USD :CHF :GBP] es-cmd-ch)
 
       (place-orders!! 100000 cmd-ch evt-ch)
-      (is (< (measure-time (place-orders!! 100000 cmd-ch evt-ch)) 1000)))))
+      (is (< (measure-time (place-orders!! 1000000 cmd-ch evt-ch)) 1000)))))
