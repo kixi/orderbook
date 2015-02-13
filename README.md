@@ -1,6 +1,6 @@
 # orderbook
 
-FIXME: description
+Playing around with clojure, event sourcing, CQRS and core.async
 
 ## Installation
 
