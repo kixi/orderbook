@@ -74,38 +74,38 @@
       )))
 
 (defn random-order []
-  {:product (rand-nth [:CHF :GBP :USD] )
+  {:product (rand-nth [:USD :CHF :GBP :HUF] )
    :order {:order-id (java.util.UUID/randomUUID)
            :limit (+ 1.0 (* 0.05 (rand)))
            :quantity (+ 1 (rand-int 1000))
            :buysell (rand-nth [:buy :sell])}})
 
 (defn place-orders!! [cnt cmd-ch evt-ch]
-                (async/go
-                  (loop [x cnt]
-                    (when-not (= 0 x)
-                      (async/>! cmd-ch (random-order))
-                      (recur (dec x)))))
-                
-                (async/<!!
-                 (async/go
-                   (loop [x 0]
-                     (if (< x cnt)
-                       (do
-                         (async/<! evt-ch)
-                         (recur (inc x)))
-                       ))
-                   :finished)))
+  (async/go
+    (loop [x cnt]
+      (when-not (= 0 x)
+        (async/>! cmd-ch (random-order))
+        (recur (dec x)))))
+  
+  (async/<!!
+   (async/go
+     (loop [x 0]
+       (if (< x cnt)
+         (do
+           (async/<! evt-ch)
+           (recur (inc x)))
+         ))
+     :finished)))
 
 (deftest performance-test-wo-queues
   (testing "scenarios"
     (let [cmd-ch (async/chan 10000)
           es-save-ch (async/chan 10000)
           es-cmd-ch (async/chan)
-          evt-ch (async/chan 10000)]
+          evt-ch (async/chan 1000000)]
 
       (es/run-eventstore! es-save-ch es-cmd-ch evt-ch)
-      (svc/run-service! cmd-ch es-save-ch [:USD :CHF :GBP] es-cmd-ch)
+      (svc/run-service! cmd-ch es-save-ch [:USD :CHF :GBP :HUF] es-cmd-ch)
 
       (place-orders!! 100000 cmd-ch evt-ch)
-      (is (< (measure-time (place-orders!! 1000000 cmd-ch evt-ch)) 1000)))))
+      (is (< (measure-time (place-orders!! 400000 cmd-ch evt-ch)) 1000)))))

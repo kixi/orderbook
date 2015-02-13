@@ -25,7 +25,7 @@
       ;; cmd handler
       (log/info "Command Handler started " aggregate-id)
       (loop []
-        (if-let [cmd (async/<! cmd-ch) ]
+        (when-let [cmd (async/<! cmd-ch) ]
           (let [_ (log/debug "Command received " cmd)
                 ;; process command
                 [ob events] (handle aggr @orderbook cmd)

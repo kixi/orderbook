@@ -14,7 +14,7 @@
     (dom/handle aggregate command)))
 
 (defn create-channels [orderbook-ids]
-  (zipmap orderbook-ids (repeatedly #(async/chan 1000))))
+  (zipmap orderbook-ids (repeatedly #(async/chan 10000))))
 
 (defn- build-distribution-channels! [cmd-ch aggregate-ids]
   (let [publisher (async/pub cmd-ch #(:product %))
@@ -30,3 +30,4 @@
     (doseq [id products]
       (aggr/run-aggregate! (Orderbook.) id (id dist-channels) event-ch (id startup-channels))
       (async/put! eventstore-cmd-ch {:load-events id :chan (id startup-channels)}))))
+

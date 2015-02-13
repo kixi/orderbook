@@ -36,11 +36,11 @@
                                     :automatically-recover-topology :true})
         mq-channel (lch/open mq-connection)
         monitoring-chan (asvc/publisher-chan (asvc/->LangohrPublisherEndpoint mq-channel "orderbook.monitor"))
-        command-chan (asvc/subscriber-chan (asvc/->LangohrReceiverEndpoint mq-channel "orderbook.command") (async/chan 1 (map #(:payload %))))
-        event-chan (asvc/publisher-chan (asvc/->LangohrPublisherEndpoint mq-channel "orderbook.events"))
+        command-chan (asvc/subscriber-chan (asvc/->LangohrReceiverEndpoint mq-channel "orderbook.command") (async/chan 10000 (map #(:payload %))))
+        event-chan (asvc/publisher-chan (asvc/->LangohrPublisherEndpoint mq-channel "orderbook.events") (async/chan 10000))
 
-        eventstore-save-ch (async/chan)
-        eventstore-cmd-ch (async/chan)
+        eventstore-save-ch (async/chan 10000)
+        eventstore-cmd-ch (async/chan 10000)
         
         _ (comment (heartbeat {:chan monitoring-chan :service-name service-name :frequency (freq->ms 1)}))
 
