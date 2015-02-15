@@ -5,9 +5,6 @@
   (:import [orderbook.types Order])
   (:gen-class))
 
-(set! *warn-on-reflection* true)
-(set! *unchecked-math* true)
-
 (def ^:const buysell-set #{:buy :sell})
 
 (def ^:const bid-buy-map {:buy :bid

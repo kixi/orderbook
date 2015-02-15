@@ -23,6 +23,24 @@
           (async/close! ret-ch))
         (recur)))))
 
+
+(defn aggregate-writer! [dir aggregate-id]
+  (let [chan (async/chan)]
+    (async/thread
+      (log/debug "aggregate stream started " aggregate-id)
+     (with-open [^java.io.Writer w (clojure.java.io/writer (str dir "/" aggregate-id) :append true)]
+       (loop []
+         (when-let [evt (async/<!! chan)]
+           (.write w evt)
+           (.newLine w)
+           (.flush w)
+           (recur)))
+       )
+      (log/debug "aggregate stream stopped " aggregate-id)
+     )
+    chan)
+  )
+
 (defn write! [chan]
   (let [writers (atom {})]
     (async/go-loop []
@@ -35,21 +53,3 @@
         (recur)))
     (doseq [ch (vals @writers)]
       (async/close! ch))))
-
-
-(defn aggregate-writer! [dir aggregate-id]
-  (let [chan (async/chan)]
-    (async/thread
-      (log/debug "aggregate stream started " aggregate-id)
-     (with-open [w (clojure.java.io/writer (str dir "/" aggregate-id) :append true)]
-       (loop []
-         (when-let [evt (async/<!! chan)]
-           (.write w evt)
-           (.newLine w)
-           (.flush w)
-           (recur)))
-       )
-      (log/debug "aggregate stream stopped " aggregate-id)
-     )
-    chan)
-  )

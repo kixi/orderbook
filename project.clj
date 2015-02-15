@@ -1,4 +1,4 @@
-(defproject feeder "0.1.0-SNAPSHOT"
+(defproject orderbook "0.1.0-SNAPSHOT"
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
@@ -15,6 +15,7 @@
                              com.sun.jdmk/jmxtools
                              com.sun.jmx/jmxri]]
                  ]
+  :global-vars {*warn-on-reflection* true}
   :main orderbook.core
   :aot [orderbook.core]
   :jvm-opts ["-XX:-TieredCompilation"])
